@@ -52,4 +52,7 @@ accuracy = np.array([dtc_tree_acc, rfc_acc, l_acc, s_acc])
 max_acc = np.argmax(accuracy)
 print(classifiers[max_acc] + ' is the best classifier for this problem')
 
-
+print('Export the model to model.pkl')
+f = open('model.pkl', 'wb')
+pickle.dump(s_clf, f)
+f.close()
