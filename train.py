@@ -1,58 +1,65 @@
-import numpy as np
-from sklearn import tree
-from sklearn.ensemble import RandomForestClassifier
+'''
+Code sample is based from gender classification challenge for 'Learn Python for Data Science #1' 
+by @Sirajology on https://youtu.be/T5pRlIbr6gg
+'''
+
 from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
+import pickle
 
-# [height, weight, shoe_size]
-X = [[181, 80, 44], [177, 70, 43], [160, 60, 38], [154, 54, 37], [166, 65, 40],
-     [190, 90, 47], [175, 64, 39],
-     [177, 70, 40], [159, 55, 37], [171, 75, 42], [181, 85, 43], [168, 75, 41], [168, 77, 41]]
+# height, width, shoe size
+X = [[181, 80, 44], [177, 70, 43], [160, 60, 38], [154, 54, 37], [166, 65, 40], [190, 90, 47], [175, 64, 39],
+     [177, 70, 40], [159, 55, 37], [171, 75, 42], [181, 85, 43]]
 
-Y = ['male', 'male', 'female', 'female', 'male', 'male', 'female', 'female',
-     'female', 'male', 'male', 'female', 'female']
-
-test_data = [[190, 70, 43],[154, 75, 42],[181,65,40]]
-test_labels = ['male','male','male']
-
-#DecisionTreeClassifier
-dtc_clf = tree.DecisionTreeClassifier()
-dtc_clf = dtc_clf.fit(X,Y)
-dtc_prediction = dtc_clf.predict(test_data)
-print dtc_prediction
-
-#RandomForestClassifier
-rfc_clf = RandomForestClassifier()
-rfc_clf.fit(X,Y)
-rfc_prediction = rfc_clf.predict(test_data)
-print rfc_prediction
-
-#Support Vector Classifier
-s_clf = SVC()
-s_clf.fit(X,Y)
-s_prediction = s_clf.predict(test_data)
-print s_prediction
+Y = ['male', 'male', 'female', 'female', 'male', 'male', 'female', 'female', 'female', 'male', 'female']
 
 
-#LogisticRegression
-l_clf = LogisticRegression()
-l_clf.fit(X,Y)
-l_prediction = l_clf.predict(test_data)
-print l_prediction
 
-#accuracy scores
-dtc_tree_acc = accuracy_score(dtc_prediction,test_labels)
-rfc_acc = accuracy_score(rfc_prediction,test_labels)
-l_acc = accuracy_score(l_prediction,test_labels)
-s_acc = accuracy_score(s_prediction,test_labels)
+clf = SVC()
+clf = clf.fit(X, Y)
 
-classifiers = ['Decision Tree', 'Random Forest', 'Logistic Regression' , 'SVC']
-accuracy = np.array([dtc_tree_acc, rfc_acc, l_acc, s_acc])
-max_acc = np.argmax(accuracy)
-print(classifiers[max_acc] + ' is the best classifier for this problem')
+print('Predicted value:', clf.predict([[190, 70, 43]]))
+print('Accuracy', clf.score(X,Y))
 
 print('Export the model to model.pkl')
 f = open('model.pkl', 'wb')
-pickle.dump(s_clf, f)
+pickle.dump(clf, f)
 f.close()
+
+print('Import the model from model.pkl')
+f2 = open('model.pkl', 'rb')
+clf2 = pickle.load(f2)
+
+X_new = [[154, 54, 35]]
+print('New Sample:', X_new)
+print('Predicted class:', clf2.predict(X_new))
+
+
+# Import Run from azureml.core, 
+# and get handle of current run for logging and history purposes
+from azureml.core.run import Run
+from sklearn.externals import joblib
+
+run = Run.get_submitted_run()
+
+model_path = "model.pkl"
+
+# Save model as part of the run history
+with open(model_path, "wb") as file:
+    from sklearn.externals import joblib
+    joblib.dump(clf, file)
+run.upload_file(model_path,  model_path)
+os.remove(model_path)
+
+
+project_root = os.path.join(os.path.dirname(__file__), '../')
+print('project_root:', project_root)
+# persist model and dataset (version to enable reproducability)
+# files saved in the outputs folder are automatically uploaded with AzureML run
+os.makedirs(os.path.join(project_root, 'outputs'), exist_ok=True)
+filename=os.path.join(project_root, 'outputs/model.pkl')
+# Save model as part of the run history
+with open(filename, "wb") as file:
+    from sklearn.externals import joblib
+    joblib.dump(clf, file)
+
+	
